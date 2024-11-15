@@ -1,0 +1,16 @@
+<h1>Carrito</h1>
+<ul class="list-group">
+  {{#each products}}
+    <li
+      class="list-group-item d-flex justify-content-between align-items-center"
+    >
+      <div>
+        <strong>{{this.product.title}}</strong>
+        - Cantidad:
+        {{this.quantity}}
+      </div>
+      <span>${{this.product.price}}</span>
+    </li>
+  {{/each}}
+</ul>
+<p>Total de productos: {{products.length}}</p>

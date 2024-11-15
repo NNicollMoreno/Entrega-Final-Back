@@ -4,7 +4,6 @@ const Cart = require("../models/Cart");
 
 const router = express.Router();
 
-// Ruta para mostrar la vista de productos con paginación
 router.get("/products", async (req, res) => {
   try {
     const { limit = 10, page = 1, sort } = req.query;
@@ -24,7 +23,6 @@ router.get("/products", async (req, res) => {
   }
 });
 
-// Ruta para la vista de productos en tiempo real
 router.get("/realtimeproducts", async (req, res) => {
   try {
     const products = await Product.find();

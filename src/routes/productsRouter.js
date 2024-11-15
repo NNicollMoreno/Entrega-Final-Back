@@ -3,7 +3,6 @@ const Product = require("../models/Product");
 
 const router = express.Router();
 
-// GET /api/products - Con filtros, paginación y ordenamiento
 router.get("/", async (req, res) => {
   try {
     const { limit = 10, page = 1, sort, query } = req.query;
@@ -46,50 +45,38 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST /api/products - Crear un nuevo producto
 router.post("/", async (req, res) => {
   try {
     const { title, description, price, code, stock, category } = req.body;
 
-    // Validación de campos obligatorios
     if (!title || !description || !price || !code || !stock || !category) {
-      return res
-        .status(400)
-        .json({
-          status: "error",
-          message: "Todos los campos son obligatorios",
-        });
+      return res.status(400).json({
+        status: "error",
+        message: "Todos los campos son obligatorios",
+      });
     }
 
-    // Validación de tipos de datos
     if (typeof price !== "number" || typeof stock !== "number") {
-      return res
-        .status(400)
-        .json({
-          status: "error",
-          message: "El precio y el stock deben ser numéricos",
-        });
+      return res.status(400).json({
+        status: "error",
+        message: "El precio y el stock deben ser numéricos",
+      });
     }
 
     const newProduct = new Product(req.body);
     await newProduct.save();
-    res
-      .status(201)
-      .json({
-        status: "success",
-        message: "Producto creado",
-        payload: newProduct,
-      });
+    res.status(201).json({
+      status: "success",
+      message: "Producto creado",
+      payload: newProduct,
+    });
   } catch (error) {
     console.error("Error al crear producto:", error);
     if (error.code === 11000) {
-      // Error de clave duplicada (para 'code' único)
-      res
-        .status(400)
-        .json({
-          status: "error",
-          message: "El código ya existe, debe ser único",
-        });
+      res.status(400).json({
+        status: "error",
+        message: "El código ya existe, debe ser único",
+      });
     } else {
       res
         .status(500)
@@ -98,13 +85,11 @@ router.post("/", async (req, res) => {
   }
 });
 
-// PUT /api/products/:id - Actualizar un producto
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, price, stock, category } = req.body;
 
-    // Validación de campos opcionales
     if (price && typeof price !== "number") {
       return res
         .status(400)

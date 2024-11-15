@@ -13,23 +13,19 @@ const httpServer = createServer(app);
 const io = new Server(httpServer);
 const port = 8080;
 
-connectDB(); // Conectar a MongoDB
+connectDB();
 
-// Configuración de Handlebars
 app.engine("handlebars", engine());
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
-// Middlewares
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Rutas
 app.use("/api/products", productsRouter);
 app.use("/api/carts", cartsRouter);
 app.use("/", viewsRouter);
 
-// WebSocket
 io.on("connection", (socket) => {
   console.log("Cliente conectado");
   socket.on("newProduct", (products) => {

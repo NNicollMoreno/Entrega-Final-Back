@@ -1,126 +1,73 @@
 const express = require("express");
 const Product = require("../models/Product");
-
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const { limit = 10, page = 1, sort, query } = req.query;
+    const { page = 1, limit = 10, sort, category, available } = req.query;
+    const query = {};
+    if (category) query.category = category;
+    if (available) query.status = available === "true";
 
-    const filter = query
-      ? { $or: [{ category: query }, { status: query === "true" }] }
-      : {};
-    const sortOrder =
-      sort === "asc" ? { price: 1 } : sort === "desc" ? { price: -1 } : {};
+    const products = await Product.find(query)
+      .sort(sort === "desc" ? { price: -1 } : { price: 1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
 
-    const options = {
-      limit: parseInt(limit),
-      page: parseInt(page),
-      sort: sortOrder,
-    };
-
-    const products = await Product.paginate(filter, options);
+    const count = await Product.countDocuments(query);
 
     res.json({
       status: "success",
-      payload: products.docs,
-      totalPages: products.totalPages,
-      prevPage: products.hasPrevPage ? products.page - 1 : null,
-      nextPage: products.hasNextPage ? products.page + 1 : null,
-      page: products.page,
-      hasPrevPage: products.hasPrevPage,
-      hasNextPage: products.hasNextPage,
-      prevLink: products.hasPrevPage
-        ? `/api/products?page=${products.page - 1}`
-        : null,
-      nextLink: products.hasNextPage
-        ? `/api/products?page=${products.page + 1}`
-        : null,
+      payload: products,
+      totalPages: Math.ceil(count / limit),
+      currentPage: parseInt(page, 10),
+      hasNextPage: page * limit < count,
+      hasPrevPage: page > 1,
+      nextLink:
+        page * limit < count
+          ? `/api/products?page=${+page + 1}&limit=${limit}`
+          : null,
+      prevLink:
+        page > 1 ? `/api/products?page=${+page - 1}&limit=${limit}` : null,
     });
   } catch (error) {
     console.error("Error al obtener productos:", error);
-    res
-      .status(500)
-      .json({ status: "error", message: "Error interno del servidor" });
+    res.status(500).json({ error: "Error al obtener los productos" });
   }
 });
 
 router.post("/", async (req, res) => {
   try {
-    const { title, description, price, code, stock, category } = req.body;
+    const { title, description, code, price, stock, category, thumbnails } =
+      req.body;
 
-    if (!title || !description || !price || !code || !stock || !category) {
-      return res.status(400).json({
-        status: "error",
-        message: "Todos los campos son obligatorios",
-      });
+    if (!title || !description || !code || !price || !stock || !category) {
+      return res
+        .status(400)
+        .json({ error: "Todos los campos obligatorios deben ser completados" });
     }
 
-    if (typeof price !== "number" || typeof stock !== "number") {
-      return res.status(400).json({
-        status: "error",
-        message: "El precio y el stock deben ser numéricos",
-      });
-    }
-
-    const newProduct = new Product(req.body);
-    await newProduct.save();
-    res.status(201).json({
-      status: "success",
-      message: "Producto creado",
-      payload: newProduct,
+    const newProduct = new Product({
+      title,
+      description,
+      code,
+      price,
+      stock,
+      category,
+      thumbnails,
     });
+
+    const savedProduct = await newProduct.save();
+    res.status(201).json(savedProduct);
   } catch (error) {
-    console.error("Error al crear producto:", error);
     if (error.code === 11000) {
-      res.status(400).json({
-        status: "error",
-        message: "El código ya existe, debe ser único",
-      });
-    } else {
-      res
-        .status(500)
-        .json({ status: "error", message: "Error interno del servidor" });
-    }
-  }
-});
-
-router.put("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title, description, price, stock, category } = req.body;
-
-    if (price && typeof price !== "number") {
       return res
         .status(400)
-        .json({ status: "error", message: "El precio debe ser numérico" });
+        .json({ error: "El código del producto ya existe" });
     }
-    if (stock && typeof stock !== "number") {
-      return res
-        .status(400)
-        .json({ status: "error", message: "El stock debe ser numérico" });
-    }
-
-    const updatedProduct = await Product.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedProduct) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Producto no encontrado" });
-    }
-
-    res.json({
-      status: "success",
-      message: "Producto actualizado",
-      payload: updatedProduct,
-    });
-  } catch (error) {
-    console.error("Error al actualizar producto:", error);
-    res
-      .status(500)
-      .json({ status: "error", message: "Error interno del servidor" });
+    console.error("Error al agregar el producto:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

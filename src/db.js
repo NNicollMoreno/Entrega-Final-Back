@@ -2,10 +2,7 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    await mongoose.connect("mongodb://localhost:27017/product-manager", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect("mongodb://localhost:27017/product-manager", {});
     console.log("Conexión a MongoDB exitosa");
   } catch (error) {
     console.error("Error al conectar a MongoDB", error);

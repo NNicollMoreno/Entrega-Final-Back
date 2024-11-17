@@ -2,7 +2,7 @@
   "name": "entrega-final",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js"
@@ -11,8 +11,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "express-handlebars": "^8.0.1",
+    "http": "^0.0.1-security",
+    "mongodb": "^6.10.0",
     "mongoose": "^8.8.1",
     "socket.io": "^4.8.1"
   },
